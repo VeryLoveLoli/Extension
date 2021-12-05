@@ -282,3 +282,103 @@ extension UIImage {
         }
     }
 }
+
+// MARK: - 二维码
+
+public extension UIImage {
+    
+    /**
+     检测
+     
+     - parameter    type:   类型
+     */
+    func detector(_ type: String) -> [CIFeature]? {
+        
+        /// 获取CI图像
+        guard let ci = ciImage else { return nil }
+        
+        /// 检测器
+        guard let detector = CIDetector(ofType: type, context: nil, options: [CIDetectorAccuracy: CIDetectorAccuracyHigh]) else { return nil }
+        
+        /// 返回检测特征
+        return detector.features(in: ci)
+    }
+    
+    /**
+     检测二维码
+     */
+    func detectorQRcode() -> [String]? {
+        
+        /// 特征列表
+        guard let features = detector(CIDetectorTypeQRCode) else { return nil }
+        
+        var urls: [String] = []
+        
+        for item in features {
+            
+            if let qr = item as? CIQRCodeFeature {
+                
+                /// 二维码特征消息
+                if let url = qr.messageString {
+                    
+                    urls.append(url)
+                }
+            }
+        }
+        
+        return urls
+    }
+    
+    /**
+     生成二维码
+     
+     - parameter    content:        内容
+     - parameter    size:           大小
+     - parameter    quality:        质量
+     - parameter    background:     背景颜色
+     - parameter    color:          二维码颜色
+     */
+    static func generateQRcode(_ content: String, size: CGSize, quality: CGInterpolationQuality = .none, background: UIColor = .white, color: UIColor = .black) -> UIImage? {
+        
+        /// 过滤器
+        guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
+        /// 设置输入消息
+        filter.setValue(content.data(using: .utf8), forKey: "inputMessage")
+        /// 导出二维码图像
+        guard let outputImage = filter.outputImage else { return nil }
+        
+        /// 颜色过滤器
+        guard let filter_color = CIFilter(name: "CIFalseColor") else { return nil }
+        /// 设置输入图像
+        filter_color.setValue(outputImage, forKey: "inputImage")
+        /// 设置图像颜色
+        filter_color.setValue(CIColor(color: color), forKey: "inputColor0")
+        /// 设置图像背景颜色
+        filter_color.setValue(CIColor(color: background), forKey: "inputColor1")
+        /// 转换颜色的二维码图像
+        guard let ciImage = filter_color.outputImage else { return nil }
+        
+        /// CG二维码图像
+        guard let cgImage = CIContext(options: nil).createCGImage(ciImage, from: ciImage.extent) else { return UIImage(ciImage: ciImage) }
+        
+        /// 开始图像上下文
+        UIGraphicsBeginImageContext(size)
+        
+        /// 上下文
+        guard let context = UIGraphicsGetCurrentContext() else { UIGraphicsEndImageContext(); return UIImage(ciImage: ciImage) }
+        /// 插入质量
+        context.interpolationQuality = quality
+        /// 上下反转
+        context.scaleBy(x: 1, y: -1)
+        /// 绘制图片
+        context.draw(cgImage, in: context.boundingBoxOfClipPath)
+        
+        /// 获取上下文图片
+        guard let image = UIGraphicsGetImageFromCurrentImageContext() else { UIGraphicsEndImageContext(); return UIImage(ciImage: ciImage) }
+        
+        /// 结束图像上下文
+        UIGraphicsEndImageContext()
+        
+        return image
+    }
+}
