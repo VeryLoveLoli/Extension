@@ -128,3 +128,93 @@ public extension String {
         return addingPercentEncoding(withAllowedCharacters: String.URLEncodeSet) ?? ""
     }
 }
+
+// MARK: - 文字集合
+
+public extension String {
+    
+    /**
+     中文集合
+     */
+    static func chineseSet() -> [String] {
+        
+        return unicodeSet(0x4e00, end: 0x9fa5) + unicodeSet(0x3400, end: 0x4db5)
+    }
+
+    /**
+     日文集合
+     */
+    static func japaneseSet() -> [String] {
+        
+        return unicodeSet(0x0800, end: 0x4e00)
+    }
+
+    /**
+     韩文集合
+     */
+    static func koreanSet() -> [String] {
+        
+        return unicodeSet(0x3130, end: 0x318f) + unicodeSet(0xac00, end: 0xd7a3)
+    }
+
+    /**
+     `unicode`编码集合
+     
+     - parameter    start:  开始编码
+     - parameter    end:    结束编码
+     */
+    static func unicodeSet(_ start: UInt16, end: UInt16) -> [String] {
+        
+        var array: [String] = []
+        
+        for item in start...end {
+            
+            var bytes: [UInt8] = [0,0]
+            
+            bytes[0] = UInt8((item<<0)>>8)
+            bytes[1] = UInt8((item<<8)>>8)
+            
+            let data = Data.init(bytes: bytes, count: bytes.count)
+            
+            if let string = String.init(data: data, encoding: .unicode) {
+                
+                array.append(string)
+            }
+            else {
+                
+                Print.error("\(item): 转换失败")
+            }
+        }
+        
+        return array
+    }
+}
+
+// MARK: - 正在替换
+
+public extension String {
+    
+    /**
+     正则替换
+     
+     - parameter    pattern:            表达式
+     - parameter    options:            选项
+     - parameter    optionsMatches:     匹配选项
+     - parameter    with:               新内容
+     */
+    func regular(_ pattern: String, options: NSRegularExpression.Options = [], optionsMatches: NSRegularExpression.MatchingOptions = [], with: String) -> String {
+        
+        do {
+            
+            let regular = try NSRegularExpression(pattern: pattern, options: options)
+            
+            return regular.stringByReplacingMatches(in: self, options: optionsMatches, range: NSRange(location: 0, length: self.count), withTemplate: with)
+            
+        } catch {
+            
+            Print.error(error.localizedDescription)
+            
+            return ""
+        }
+    }
+}
