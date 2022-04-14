@@ -19,7 +19,7 @@ public extension UITableView {
      - parameter    bundle:         Bundle包
      - parameter    identifier:     identifier
      */
-    func registerCell(_ name: String, bundle: Bundle? = nil, identifier: String = "Cell") {
+    func registerCell(_ name: String, bundle: Bundle? = Extension.bundle, identifier: String = "Cell") {
         
         register(UINib.init(nibName: name, bundle: bundle), forCellReuseIdentifier: identifier)
     }
@@ -31,7 +31,7 @@ public extension UITableView {
      - parameter    bundle:         Bundle包
      - parameter    identifier:     identifier
      */
-    func registerHeader(_ name: String, bundle: Bundle? = nil, identifier: String = "Header") {
+    func registerHeader(_ name: String, bundle: Bundle? = Extension.bundle, identifier: String = "Header") {
         
         register(UINib.init(nibName: name, bundle: bundle), forHeaderFooterViewReuseIdentifier: identifier)
     }
@@ -43,7 +43,7 @@ public extension UITableView {
      - parameter    bundle:         Bundle包
      - parameter    identifier:     identifier
      */
-    func registerFooter(_ name: String, bundle: Bundle? = nil, identifier: String = "Footer") {
+    func registerFooter(_ name: String, bundle: Bundle? = Extension.bundle, identifier: String = "Footer") {
         
         register(UINib.init(nibName: name, bundle: bundle), forHeaderFooterViewReuseIdentifier: identifier)
     }
