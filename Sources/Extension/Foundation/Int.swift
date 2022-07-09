@@ -14,19 +14,21 @@ public extension Int {
     /**
      磁盘大小
      
+     - parameter    base:   进制
+     
      - returns: String  格式化字符串  例如：1000B、200.00KB、300.12MB
      */
-    func diskSize() -> String {
+    func diskSize(_ base: Int = 1024) -> String {
         
         var number = self
         var remainder = 0
         var unit = 0
         
-        while number/1024 > 0 {
+        while number/base > 0 {
             
             unit += 1
-            remainder = number%1024
-            number = number/1024
+            remainder = number%base
+            number = number/base
         }
         
         var unitString = ""
@@ -69,7 +71,7 @@ public extension Int {
         }
         else {
             
-            size = String.init(format: "%.2f", Float(number) + Float(remainder)/1024.0) + unitString
+            size = String.init(format: "%.2f", Float(number) + Float(remainder)/Float(base)) + unitString
         }
         
         return size
