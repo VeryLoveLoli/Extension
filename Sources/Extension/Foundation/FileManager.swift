@@ -127,3 +127,75 @@ public extension FileManager {
     /// 系统数据路径
     static let systemDataPath = NSHomeDirectory() + "/SystemData/"
 }
+
+// MARK: - 磁盘大小
+
+public extension FileManager {
+    
+    /**
+     系统设置磁盘未使用大小
+     */
+    static func systemSettingDiskUnusedSize() -> UInt64 {
+        
+        if #available(iOS 11.0, *) {
+            
+            do {
+                
+                let values = try URL(fileURLWithPath: "/").resourceValues(forKeys: [URLResourceKey.volumeAvailableCapacityForImportantUsageKey])
+                
+                if let size = values.allValues[.volumeAvailableCapacityForImportantUsageKey] as? UInt64 {
+                    
+                    return size
+                }
+                
+            } catch {
+                
+            }
+        }
+        
+        var fs = statfs()
+        
+        if statfs("/", &fs) >= 0 {
+            
+            return UInt64(fs.f_bsize) * fs.f_bavail
+        }
+        
+        return 0
+    }
+    
+    /**
+     磁盘使用大小
+     */
+    func diskUseSize() -> Int {
+        
+        do {
+            
+            let fileAttributes = try attributesOfFileSystem(forPath: "/")
+            let size = fileAttributes[FileAttributeKey.systemSize]
+            
+            return (size as AnyObject).integerValue
+            
+        } catch  {
+            
+            return 0
+        }
+    }
+    
+    /**
+     磁盘未使用大小
+     */
+    func diskUnusedSize() -> Int {
+        
+        do {
+            
+            let fileAttributes = try attributesOfFileSystem(forPath: "/")
+            let size = fileAttributes[FileAttributeKey.systemFreeSize]
+            
+            return (size as AnyObject).integerValue
+            
+        } catch  {
+            
+            return 0
+        }
+    }
+}
