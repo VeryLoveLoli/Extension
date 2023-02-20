@@ -13,29 +13,56 @@ import Print
 public extension String {
     
     /**
-     获取索引字符串
+     获取索引字符串（用于`String.count`的`0..<count`）
      */
     subscript(_ i: Int) -> String {
+        
         return self[i ..< i + 1]
     }
     
     /**
-     获取索引区间字符串
+     获取索引区间字符串（用于`String.count`的`0..<count`）
      */
     subscript(_ range: Range<Int>) -> String {
         
-        if count == 0 {
+        if count == 0 || range.lowerBound >= count {
             
             return ""
         }
         
-        let i = min(range.lowerBound, self.count)
-        let l = min(range.upperBound, self.count) - range.lowerBound
+        let l = min(range.upperBound, count) - range.lowerBound
         
-        let start = index(startIndex, offsetBy: i)
+        let start = index(startIndex, offsetBy: range.lowerBound)
         let end = index(start, offsetBy: l)
         
         return String(self[start..<end])
+    }
+    
+    /**
+     获取索引区间字符串
+     
+     注意：表情符号长度占2个长度
+     例如：
+     ```
+     let string = "😄"
+     let v1 = string[NSRange(location: 0, length: 1)]
+     let v2 = string[NSRange(location: 0, length: 2)]
+     print(v1)
+     print(v2)
+     ```
+     输出：
+     
+     😄
+     `v2`才能正确输出
+     */
+    subscript(_ range: NSRange) -> String {
+        
+        if let rangeIndex = self.range(range) {
+            
+            return String(self[rangeIndex])
+        }
+        
+        return ""
     }
 }
 
@@ -215,6 +242,98 @@ public extension String {
             Print.error(error.localizedDescription)
             
             return ""
+        }
+    }
+}
+
+// MARK - 范围转换
+
+extension String {
+     
+    /**
+     `Range<String.Index>` 转 `NSRange`
+     
+     - parameter    range:      索引范围
+     */
+    func range(_ range: Range<String.Index>) -> NSRange {
+        
+        let from = range.lowerBound.samePosition(in: utf16)!
+        let to = range.upperBound.samePosition(in: utf16)!
+        
+        return NSRange(location: utf16.distance(from: utf16.startIndex, to: from),
+                       length: utf16.distance(from: from, to: to))
+    }
+     
+    /**
+     `NSRange` 转 `Range<String.Index>`
+     
+     - parameter    range:      范围
+     */
+    func range(_ range: NSRange) -> Range<String.Index>? {
+        
+        if let from16 = utf16.index(utf16.startIndex, offsetBy: range.location, limitedBy: utf16.endIndex),
+           let to16 = utf16.index(from16, offsetBy: range.length, limitedBy: utf16.endIndex),
+           let from = String.Index(from16, within: self),
+           let to = String.Index(to16, within: self) {
+            
+            return from ..< to
+        }
+        
+        return nil
+    }
+}
+
+// MARK: - 正则搜索
+
+extension String {
+    
+    /**
+     匹配
+     */
+    struct Match {
+        
+        /// 类型
+        var type: NSTextCheckingResult.CheckingType
+        /// 范围
+        var range: NSRange
+        /// 内容
+        var content: String
+        
+    }
+    
+    /**
+     正则搜索
+     
+     - parameter    pattern:            表达式
+     - parameter    options:            选项
+     - parameter    optionsMatches:     匹配选项
+     
+     - returns  匹配列表
+     */
+    func regular(_ pattern: String, options: NSRegularExpression.Options = [], optionsMatches: NSRegularExpression.MatchingOptions = []) -> [String.Match] {
+        
+        do {
+            
+            let regular = try NSRegularExpression(pattern: pattern, options: options)
+            
+            let list = regular.matches(in: self, options: [], range: NSRange(location: 0, length: count))
+            
+            var matches: [String.Match] = []
+            
+            for item in list {
+                
+                let match = String.Match(type: item.resultType, range: item.range, content: self[item.range])
+                
+                matches.append(match)
+            }
+            
+            return matches
+            
+        } catch {
+            
+            Print.error(error.localizedDescription)
+            
+            return []
         }
     }
 }
