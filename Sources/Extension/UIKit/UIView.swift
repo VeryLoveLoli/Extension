@@ -49,6 +49,59 @@ public extension UIView {
             }
         }
     }
+    
+    /// 最后一个导航
+    var lastNC: UINavigationController? {
+        
+        var vc: UIViewController?
+        
+        switch self {
+        case let w as UIWindow:
+            vc = w.rootViewController
+        default:
+            vc = window?.rootViewController
+        }
+        
+        var nc: UINavigationController?
+        
+        while true {
+            
+            switch vc {
+                
+            case let nav as UINavigationController:
+                
+                nc = nav
+                vc = nav.viewControllers.last
+                
+            case let tab as UITabBarController:
+                
+                vc = tab.selectedViewController
+                
+                if let nav = vc?.navigationController {
+                    
+                    nc = nav
+                }
+                
+            default:
+                
+                if let nav = vc?.navigationController {
+                    
+                    nc = nav
+                }
+                
+                if vc?.presentedViewController != nil {
+                    
+                    vc = vc?.presentedViewController
+                }
+                else {
+                    
+                    break
+                }
+            }
+        }
+        
+        return nc
+    }
 }
 
 // MARK: - 视图布局方向
