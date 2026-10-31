@@ -130,3 +130,24 @@ public extension UIView {
         }
     }
 }
+
+// MARK: - 安全视图
+
+extension UIView {
+    
+    /**
+     安全视图
+     防止截屏和录屏
+     */
+    static func securityView() -> UIView? {
+        
+        let textField = UITextField()
+        textField.isSecureTextEntry = true
+        textField.isUserInteractionEnabled = true
+        
+        let v = textField.subviews.first
+        v?.isUserInteractionEnabled = true
+        
+        return v
+    }
+}
